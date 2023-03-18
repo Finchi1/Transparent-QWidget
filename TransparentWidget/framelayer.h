@@ -2,7 +2,6 @@
 
 #include <QWidget>
 #include "system.h"
-#include <cstdarg>
 
 class FrameLayer : public QWidget
 {

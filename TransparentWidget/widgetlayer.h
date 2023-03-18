@@ -18,10 +18,15 @@ public:
 	void setFrameColor(const QColor color) { mResizingFrame->setPenColor(color); }
 	void setFrameWidth(const qreal width) { mResizingFrame->setPenWidth(width); }
 	void setMainRectColor(const QColor color) {}
+	void setBlurBehind(bool blured) { mBlurBehind = blured; }
 
 protected:
 	void paintEvent(QPaintEvent* event) override;
 	void resizeEvent(QResizeEvent* event) override;
+	bool nativeEvent(const QByteArray& eventType, void* message, qintptr* result) override;
+
+private:
+	void setWindowBlur(HWND hWnd);
 
 private:
 	FrameLayer* mResizingFrame{ nullptr };
@@ -34,4 +39,5 @@ private:
 	QColor mSystemPanelColor{ QColor(25, 25, 25, 255) };
 	QSize mSystemButtonsSize{ QSize(45, 40) };
 	bool mFixedSize{ false };
+	bool mBlurBehind{ false };
 };

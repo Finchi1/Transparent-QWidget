@@ -4,6 +4,7 @@
 #include <QPainter>
 #include <QList>
 #include <QTime>
+#include <Windows.h>
 
 WidgetLayer::WidgetLayer(QWidget* parent)
 	: QWidget(parent)
@@ -113,6 +114,7 @@ WidgetLayer::WidgetLayer(QWidget* parent)
 		this->repaint();
 	};
 	connect(mResizingFrame, &FrameLayer::beginResizing, this, frameInResizing);
+	setBlurBehind(true);
 }
 
 WidgetLayer::~WidgetLayer()
@@ -208,4 +210,41 @@ void WidgetLayer::resizeEvent(QResizeEvent* event)
 	mBtnMinimize->setGeometry(this->width() - mBtnClose->width() - mBtnMaximize->width() - mBtnMinimize->width() - 1, 1, 0, 0);
 	QList<QWidget*> systemWidgetsList{ mBtnMinimize, mBtnMaximize, mBtnClose };
 	mResizingFrame->setSystemWidgetsInfo(systemWidgetsList);
+}
+bool WidgetLayer::nativeEvent(const QByteArray& eventType, void* message, qintptr* result)
+{
+	MSG* msg = reinterpret_cast<MSG*>(message);
+	if(mBlurBehind)
+		setWindowBlur(msg->hwnd);
+	return false;
+}
+
+void WidgetLayer::setWindowBlur(HWND hWnd)
+{
+	const HINSTANCE hModule = LoadLibrary(TEXT("user32.dll"));
+	if (hModule)
+	{
+		struct ACCENTPOLICY
+		{
+			int nAccentState;
+			int nFlags;
+			int nColor;
+			int nAnimationId;
+		};
+		struct WINCOMPATTRDATA
+		{
+			int nAttribute;
+			PVOID pData;
+			ULONG ulDataSize;
+		};
+		typedef BOOL(WINAPI* pSetWindowCompositionAttribute)(HWND, WINCOMPATTRDATA*);
+		const pSetWindowCompositionAttribute SetWindowCompositionAttribute = (pSetWindowCompositionAttribute)GetProcAddress(hModule, "SetWindowCompositionAttribute");
+		if (SetWindowCompositionAttribute)
+		{
+			ACCENTPOLICY policy = { 3, 0, 0, 0 };
+			WINCOMPATTRDATA data = { 19, &policy, sizeof(ACCENTPOLICY) };
+			SetWindowCompositionAttribute(hWnd, &data);
+		}
+		FreeLibrary(hModule);
+	}
 }
