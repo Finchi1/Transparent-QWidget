@@ -18,7 +18,7 @@ public:
 	void setFrameColor(const QColor color) { mResizingFrame->setPenColor(color); }
 	void setFrameWidth(const qreal width) { mResizingFrame->setPenWidth(width); }
 	void setMainRectColor(const QColor color) {}
-	void setBlurBehind(bool blured) { mBlurBehind = blured; }
+	void setBlurBehind(bool blured) { mBlurBehind = blured; mNativeEventClear = true; }
 
 protected:
 	void paintEvent(QPaintEvent* event) override;
@@ -26,7 +26,7 @@ protected:
 	bool nativeEvent(const QByteArray& eventType, void* message, qintptr* result) override;
 
 private:
-	void setWindowBlur(HWND hWnd);
+	void setWindowBlur(HWND hWnd, int state = 3); // state = 3 - it's blur behind effect
 
 private:
 	FrameLayer* mResizingFrame{ nullptr };
@@ -40,4 +40,5 @@ private:
 	QSize mSystemButtonsSize{ QSize(45, 40) };
 	bool mFixedSize{ false };
 	bool mBlurBehind{ false };
+	bool mNativeEventClear{ false };
 };

@@ -213,13 +213,22 @@ void WidgetLayer::resizeEvent(QResizeEvent* event)
 }
 bool WidgetLayer::nativeEvent(const QByteArray& eventType, void* message, qintptr* result)
 {
+	static int i = 0;
 	MSG* msg = reinterpret_cast<MSG*>(message);
-	if(mBlurBehind)
+	if(mBlurBehind && mNativeEventClear)
+	{
 		setWindowBlur(msg->hwnd);
+		mNativeEventClear = false;
+	}
+	else if (!mBlurBehind && mNativeEventClear)
+	{
+		setWindowBlur(msg->hwnd, 0);
+		mNativeEventClear = false;
+	}
 	return false;
 }
 
-void WidgetLayer::setWindowBlur(HWND hWnd)
+void WidgetLayer::setWindowBlur(HWND hWnd, int state)
 {
 	const HINSTANCE hModule = LoadLibrary(TEXT("user32.dll"));
 	if (hModule)
@@ -241,7 +250,7 @@ void WidgetLayer::setWindowBlur(HWND hWnd)
 		const pSetWindowCompositionAttribute SetWindowCompositionAttribute = (pSetWindowCompositionAttribute)GetProcAddress(hModule, "SetWindowCompositionAttribute");
 		if (SetWindowCompositionAttribute)
 		{
-			ACCENTPOLICY policy = { 3, 0, 0, 0 };
+			ACCENTPOLICY policy = { state, 0, 0, 0 };
 			WINCOMPATTRDATA data = { 19, &policy, sizeof(ACCENTPOLICY) };
 			SetWindowCompositionAttribute(hWnd, &data);
 		}
